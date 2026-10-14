@@ -241,8 +241,6 @@ Cela remet aussi la bonne version dans la source utilisée par Argo CD. Si on ch
 
 # TaskFlow — Compte rendu du lab GitOps
 
-Dépôt : [Darkbd11/taskflow-gitops](https://github.com/Darkbd11/taskflow-gitops)
-
 Ce lab nous a permis de travailler sur les changements de version d’une application dans Kubernetes. Le matin, nous avons utilisé Git comme source de configuration et provoqué une dérive sur le cluster. L’après-midi, nous avons comparé Blue-Green et Canary, puis abandonné une version qui renvoyait des erreurs.
 
 
@@ -636,5 +634,6 @@ Le Blue-Green permet de tester sur le preview avant de toucher à la production.
 Côté ressources, nous avons observé huit pods en Blue-Green pendant la coexistence des versions, contre quatre au palier Canary de 25 %. Ce sont les nombres constatés dans ce lab, pas une règle générale : un Canary peut créer des pods supplémentaires pendant les transitions. Nous n’avons pas calculé de coût financier.
 
 Le choix du Canary repose donc surtout sur la possibilité de tester progressivement avec le trafic réel et d’arrêter tôt une version défectueuse. Il faut toutefois une observation adaptée : les probes seules n’ont pas suffi dans notre test. Les décisions de promotion et d’abandon sont restées manuelles ; nous n’avons pas mis en place de détection ni de rollback automatique.
+
 
 
