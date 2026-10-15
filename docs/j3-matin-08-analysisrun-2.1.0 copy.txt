@@ -1,0 +1,87 @@
+Name:         taskflow-df976ccb5-6-2
+Namespace:    taskflow
+Labels:       app=taskflow
+              rollout-type=Step
+              rollouts-pod-template-hash=df976ccb5
+              step-index=2
+Annotations:  rollout.argoproj.io/revision: 6
+API Version:  argoproj.io/v1alpha1
+Kind:         AnalysisRun
+Metadata:
+  Creation Timestamp:  2026-10-15T09:28:13Z
+  Generation:          12
+  Owner References:
+    API Version:           argoproj.io/v1alpha1
+    Block Owner Deletion:  true
+    Controller:            true
+    Kind:                  Rollout
+    Name:                  taskflow
+    UID:                   50abfe72-3e29-45fd-90b2-18e7ad87f2e7
+  Resource Version:        52482
+  UID:                     a718836b-3201-486b-907f-f53ef0ed9a19
+Spec:
+  Args:
+    Name:   cible
+    Value:  http://taskflow-canary
+  Metrics:
+    Name:  test-de-charge-k6
+    Provider:
+      Job:
+        Metadata:
+        Spec:
+          Backoff Limit:  0
+          Template:
+            Metadata:
+            Spec:
+              Containers:
+                Args:
+                  run
+                  /scripts/robustesse.js
+                Env:
+                  Name:             TARGET
+                  Value:            {{args.cible}}
+                Image:              grafana/k6:latest
+                Image Pull Policy:  IfNotPresent
+                Name:               k6
+                Resources:
+                  Limits:
+                    Memory:  256Mi
+                  Requests:
+                    Cpu:     100m
+                    Memory:  64Mi
+                Volume Mounts:
+                  Mount Path:  /scripts
+                  Name:        scripts
+              Restart Policy:  Never
+              Volumes:
+                Config Map:
+                  Name:  k6-robustesse
+                Name:    scripts
+Status:
+  Completed At:  2026-10-15T09:28:50Z
+  Dry Run Summary:
+  Message:  Metric "test-de-charge-k6" assessed Failed due to failed (1) > failureLimit (0)
+  Metric Results:
+    Count:   1
+    Failed:  1
+    Measurements:
+      Finished At:  2026-10-15T09:28:50Z
+      Metadata:
+        Job - Name:       a718836b-3201-486b-907f-f53ef0ed9a19.test-de-charge-k6.1
+        Job - Namespace:  taskflow
+      Phase:              Failed
+      Resume At:          2026-10-15T09:28:50Z
+      Started At:         2026-10-15T09:28:13Z
+    Name:                 test-de-charge-k6
+    Phase:                Failed
+  Phase:                  Failed
+  Run Summary:
+    Count:     1
+    Failed:    1
+  Started At:  2026-10-15T09:28:13Z
+Events:
+  Type     Reason             Age    From                 Message
+  ----     ------             ----   ----                 -------
+  Warning  MetricFailed       3m48s  rollouts-controller  Metric 'test-de-charge-k6' Completed. Result: Failed
+  Warning  AnalysisRunFailed  3m48s  rollouts-controller  Analysis Completed. Result: Failed
+

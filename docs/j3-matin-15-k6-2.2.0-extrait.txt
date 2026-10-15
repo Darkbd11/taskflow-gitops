@@ -1,0 +1,30 @@
+Extrait du résumé du Job k6 fourni par Boulaye le 15/10/2026.
+Job : aabf0f22-12ce-4a77-a60f-aef302ffaec0.test-de-charge-k6.1
+Analyse : taskflow-7ddd57d788-8-2 ; révision 8 ; image TaskFlow 2.2.0.
+Les lignes de progression intermédiaires sont omises.
+
+THRESHOLDS
+http_req_duration
+    ✓ 'p(95)<250' p(95)=13.85ms
+http_req_failed
+    ✓ 'rate<0.02' rate=0.00%
+
+TOTAL RESULTS
+checks_total: 725
+checks_succeeded: 100.00% 725 out of 725
+checks_failed: 0.00% 0 out of 725
+✓ statut 200
+
+HTTP
+http_req_duration: avg=5.65ms min=2.14ms med=4.61ms max=39.07ms p(90)=7.78ms p(95)=13.85ms
+http_req_failed: 0.00% 0 out of 725
+http_reqs: 725 24.029445/s
+
+EXECUTION
+iteration_duration: avg=207.45ms min=202.66ms med=206.33ms max=240.82ms p(90)=209.58ms p(95)=215.63ms
+iterations: 725
+vus: 5 min=5 max=5
+vus_max: 5 min=5 max=5
+
+running (0m30.2s), 0/5 VUs, 725 complete and 0 interrupted iterations
+default ✓ [100%] 5 VUs 30s
