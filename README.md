@@ -765,3 +765,34 @@ Les 37 secondes mesurées correspondent à chaque analyse. Nous n’avons pas me
 Les événements fournis ont des âges relatifs. Le début exact d’exposition au défaut et l’instant précis de la dernière réponse en `2.1.0` ne sont pas mesurés. La durée de 37 secondes correspond à chaque AnalysisRun.
 
 Le [postmortem](postmortem-2.1.0.md) détaille la cause, l’impact observé et les suites proposées.
+
+
+## J3 après-midi — Contrôles de sécurité PSSI
+
+Nous avons ajouté les règles de limite mémoire et d’exécution non-root,
+puis installé le workflow PSSI dans GitHub Actions.
+
+Le premier contrôle a détecté l’absence de `runAsNonRoot: true`.
+Après l’ajout dans le Rollout, les 25 tests locaux sont passés.
+
+| Règle | Contrôle réalisé | Outil | Preuve |
+| --- | --- | --- | --- |
+| R1 — Tag explicite, sans latest | La PR #22 utilise volontairement `nginx:latest` et échoue sur R1 | conftest | [Erreurs R1 et R2](docs/j3-aprem-06-conftest-non-conforme.png) |
+| R2 — Registre autorisé | La même image est refusée car elle ne vient pas du registre prévu | conftest | [PR bloquée](docs/j3-aprem-06-pr-bloquee.png) |
+| R3 — Limite mémoire | Le conteneur possède une limite de `256Mi` ; le contrôle passe | conftest | [Contrôle conforme](docs/j3-aprem-03-conftest-conforme.png) |
+| R4 — Pod non-root | Le contrôle échoue avant l’ajout de `runAsNonRoot: true`, puis passe après | conftest | [Avant correction](docs/j3-aprem-02-conftest-r4-echec.png), [après correction](docs/j3-aprem-03-conftest-conforme.png) |
+| R5 — Vulnérabilités HIGH/CRITICAL corrigeables | Le scan trouve 9 vulnérabilités HIGH dans l’image 2.2.0 ; nous documentons une exception temporaire dans `.trivyignore` | Trivy | [Vulnérabilités détectées](docs/j3-aprem-04b-trivy-vulnerabilites.png), PR #21 |
+
+Nous avons rendu les deux contrôles obligatoires dans le ruleset de `main`.
+La PR #22 montre que la fusion est bloquée lorsque conftest échoue.
+
+![Contrôles obligatoires](docs/j3-aprem-05-ruleset-pssi.png)
+
+![Fusion bloquée par le contrôle PSSI](docs/j3-aprem-06-pr-bloquee.png)
+
+L’exception Trivy expire le 16 octobre 2026. Elle ne corrige pas les
+vulnérabilités présentes dans l’image.
+
+Nous avons également relevé une limite du workflow : il ne scanne que
+les images du registre autorisé. Sur la PR #22, Trivy termine sans scan ;
+son résultat vert ne signifie donc pas que nginx est sans vulnérabilité.
