@@ -746,8 +746,8 @@ Les 37 secondes mesurées correspondent à chaque analyse. Nous n’avons pas me
 
 | Heure | Changement ou contrôle | Résultat | Preuve |
 | --- | --- | --- | --- |
-| 11:12:42 | [PR #13](https://github.com/Darkbd11/taskflow-gitops/pull/13), commit `8a67c35` : analyse automatique ajoutée | Image maintenue en `2.0.0` ; AnalysisTemplate, ConfigMap et service Canary déployés | [Ressources](j3-matin-05-ressources-analyse-auto.png) |
-| Avant la PR #14 | Test k6 de référence sur `2.0.0` | 728 requêtes, 0 % d’erreurs, p95 de 8,32 ms | [Logs](j3-matin-02-charge-2.0.0.txt) |
+| 11:12:42 | [PR #13](https://github.com/Darkbd11/taskflow-gitops/pull/13), commit `8a67c35` : analyse automatique ajoutée | Image maintenue en `2.0.0` ; AnalysisTemplate, ConfigMap et service Canary déployés | [Ressources](docs/j3-matin-05-ressources-analyse-auto.png) |
+| Avant la PR #14 | Test k6 de référence sur `2.0.0` | 728 requêtes, 0 % d’erreurs, p95 de 8,32 ms | [Logs](docs/j3-matin-02-charge-2.0.0.txt) |
 | 11:26:31 | [PR #14](https://github.com/Darkbd11/taskflow-gitops/pull/14), commit `bfb6e1b` : image `2.1.0` | Révision 6, Canary limité au premier palier | [Analyse en cours](docs/j3-matin-07-analyse-2.1.0-en-cours.png) |
 | 11:28:13 | Début de `taskflow-df976ccb5-6-2` | Job k6 sur `taskflow-canary` | [Export](docs/j3-matin-15-analysisruns.yaml) |
 | 11:28:44 | k6 termine avec ses seuils dépassés | 30,10 % d’erreurs ; p95 de 313,22 ms | [Logs k6](docs/j3-matin-08-logs-k6-2.1.0.txt) |
