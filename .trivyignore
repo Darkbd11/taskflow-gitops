@@ -1,0 +1,28 @@
+# Exception temporaire PSSI-R5 — Lab J3
+# Date de proposition : 2026-10-15
+# Expiration : 2026-10-16
+# Responsable : notre binôme.
+# Validation : à effectuer lors de la relecture de la PR #21.
+#
+# Image concernée : ghcr.io/9m7fjfpv9k-cyber/taskflow:2.2.0
+# Motif : conserver l'image fournie par le cours pour terminer le lab.
+# Cette exception autorise uniquement la poursuite sur le cluster local du lab.
+# Elle ne vaut pas autorisation de mise en production.
+#
+# Les vulnérabilités restent présentes dans l'image.
+# La correction attendue est une mise à jour des dépendances,
+# suivie d'une reconstruction de l'image et d'un nouveau scan.
+# Aucun changement des seuils HIGH/CRITICAL du workflow.
+
+# Starlette 0.41.3
+CVE-2025-62727 exp:2026-10-16
+CVE-2026-48818 exp:2026-10-16
+CVE-2026-54283 exp:2026-10-16
+
+# urllib3 1.26.20
+CVE-2025-66418 exp:2026-10-16
+CVE-2025-66471 exp:2026-10-16
+CVE-2026-21441 exp:2026-10-16
+CVE-2026-44431 exp:2026-10-16
+CVE-2026-97687 exp:2026-10-16
+CVE-2026-97689 exp:2026-10-16
