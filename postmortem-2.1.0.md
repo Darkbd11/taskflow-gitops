@@ -31,7 +31,7 @@ Les 30,10 % d’erreurs ont été mesurés **sur la nouvelle version seule**, vi
 
 Après l’abandon, l’observation du service principal a donné `100 version=2.0.0 http=200`. Le défaut n’a donc pas été étendu aux paliers suivants.
 
-![Service stable après l’abandon, Argo CD encore dégradé](j3-matin-09-service-apres-abort.png)
+![Service stable après l’abandon, Argo CD encore dégradé](/docs/j3-matin--09-service-apres-abort.png)
 
 ## Chronologie
 
@@ -88,12 +88,12 @@ Le contrôleur abandonne alors le déploiement. Aucune promotion ni commande man
 
 | Question | Preuve conservée |
 | --- | --- |
-| Quelle révision a été arrêtée ? | [Sortie du Rollout](j3-matin-08-rollout-2.1.0.txt) : révision 6, `RolloutAborted`, Canary à zéro, `2.0.0` stable. |
-| Quelle analyse a échoué ? | [Détail de l’AnalysisRun](j3-matin-08-analysisrun-2.1.0.txt) et [export des deux analyses](j3-matin-15-analysisruns.yaml). |
-| Qu’a mesuré k6 ? | [Logs du Job en échec](j3-matin-08-logs-k6-2.1.0.txt) : 90 échecs sur 299 et p95 de 313,22 ms. |
-| Dans quel ordre les actions ont-elles eu lieu ? | [Événements Kubernetes](j3-matin-15-evenements-final.txt), timestamps des analyses et historique des PR. |
+| Quelle révision a été arrêtée ? | [Sortie du Rollout](/docs/j3-matin--08-rollout-2.1.0.txt) : révision 6, `RolloutAborted`, Canary à zéro, `2.0.0` stable. |
+| Quelle analyse a échoué ? | [Détail de l’AnalysisRun](/docs/j3-matin--08-analysisrun-2.1.0.txt) et [export des deux analyses](/docs/j3-matin--15-analysisruns.yaml). |
+| Qu’a mesuré k6 ? | [Logs du Job en échec](/docs/j3-matin--08-logs-k6-2.1.0.txt) : 90 échecs sur 299 et p95 de 313,22 ms. |
+| Dans quel ordre les actions ont-elles eu lieu ? | [Événements Kubernetes](/docs/j3-matin--15-evenements-final.txt), timestamps des analyses et historique des PR. |
 
-![L’analyse de 2.1.0 passe en Failed](j3-matin-07-analysisrun-2.1.0-echec.png)
+![L’analyse de 2.1.0 passe en Failed](/docs/j3-matin--07-analysisrun-2.1.0-echec.png)
 
 Les captures montrent les statuts ; les fichiers texte conservent les noms des ressources et les messages pour pouvoir relire l’enquête. L’export des événements utilise `LAST SEEN`, avec des âges relatifs : nous ne lui attribuons pas d’heures absolues à la seconde près.
 
@@ -103,9 +103,9 @@ L’abandon a protégé le service, mais Git demandait encore `2.1.0`. Argo CD a
 
 La PR #15 a remis `2.0.0` dans Git. Après synchronisation, le Rollout et Argo CD sont revenus à un état sain.
 
-![PR de revert approuvée et fusionnée](j3-matin-10-pr-revert-2.1.0.png)
+![PR de revert approuvée et fusionnée](/docs/j3-matin--10-pr-revert-2.1.0.png)
 
-![Contrôle après le revert](j3-matin-11-retour-stable-2.0.0.png)
+![Contrôle après le revert](/docs/j3-matin--11-retour-stable-2.0.0.png)
 
 La version `2.2.0` a ensuite suivi le même mécanisme d’analyse, avec des paramètres de panne remis à zéro dans le workflow de publication du cours.
 
@@ -117,9 +117,9 @@ La version `2.2.0` a ensuite suivi le même mécanisme d’analyse, avec des par
 
 Les trois tests utilisent cinq utilisateurs virtuels pendant 30 secondes. Le test de référence et les analyses ne visent toutefois pas le même nombre de pods. Ce sont des contrôles des seuils du lab, pas une comparaison de capacité à grande échelle.
 
-![Analyse de 2.2.0 réussie](j3-matin-13-analysisrun-2.2.0-succes.png)
+![Analyse de 2.2.0 réussie](/docs/j3-matin--13-analysisrun-2.2.0-succes.png)
 
-![État final en 2.2.0](j3-matin-14-deploiement-2.2.0-final.png)
+![État final en 2.2.0](/docs/j3-matin--14-deploiement-2.2.0-final.png)
 
 ## Ce qui a fonctionné
 
