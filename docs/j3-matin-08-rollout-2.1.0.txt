@@ -1,0 +1,32 @@
+Name:            taskflow
+Namespace:       taskflow
+Status:          [31m✖[0m Degraded
+Message:         RolloutAborted: Rollout aborted update to revision 6: Step-based analysis phase error/failed: Metric "test-de-charge-k6" assessed Failed due to failed (1) > failureLimit (0)
+Strategy:        Canary
+  Step:          0/7
+  SetWeight:     0
+  ActualWeight:  0
+Images:          ghcr.io/9m7fjfpv9k-cyber/taskflow:2.0.0 ([32mstable[0m)
+Replicas:
+  Desired:       4
+  Current:       4
+  Updated:       0
+  Ready:         4
+  Available:     4
+
+NAME                                                                 KIND         STATUS        AGE    INFO
+⟳ taskflow                                                           Rollout      [31m✖[0m Degraded    19h    
+├──# revision:6                                                                                        
+│  ├──⧉ [33mtaskflow-df976ccb5[0m                                           ReplicaSet   [0m•[0m ScaledDown  16h    [33mcanary[0m
+│  └──α [0mtaskflow-df976ccb5-6-2[0m                                       AnalysisRun  [31m✖[0m Failed      3m36s  [31m✖[0m 1
+│     └──⊞ [0ma718836b-3201-486b-907f-f53ef0ed9a19.test-de-charge-k6.1[0m  Job          [31m✖[0m Failed      3m36s  
+├──# revision:5                                                                                        
+│  └──⧉ [32mtaskflow-c6cf57bd6[0m                                           ReplicaSet   [32m✔[0m Healthy     18h    [32mstable[0m
+│     ├──□ taskflow-c6cf57bd6-frglv                                  Pod          [32m✔[0m Running     18h    ready:1/1,restarts:2
+│     ├──□ taskflow-c6cf57bd6-88h54                                  Pod          [32m✔[0m Running     18h    ready:1/1,restarts:2
+│     ├──□ taskflow-c6cf57bd6-x8hhg                                  Pod          [32m✔[0m Running     16h    ready:1/1,restarts:1
+│     └──□ taskflow-c6cf57bd6-42n7g                                  Pod          [32m✔[0m Running     2m59s  ready:1/1
+├──# revision:2                                                                                        
+│  └──⧉ taskflow-78cdc8775b                                          ReplicaSet   [0m•[0m ScaledDown  19h    
+└──# revision:1                                                                                        
+   └──⧉ taskflow-5769dcb86c                                          ReplicaSet   [0m•[0m ScaledDown  19h    
