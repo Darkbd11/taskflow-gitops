@@ -635,5 +635,133 @@ Côté ressources, nous avons observé huit pods en Blue-Green pendant la coexis
 
 Le choix du Canary repose donc surtout sur la possibilité de tester progressivement avec le trafic réel et d’arrêter tôt une version défectueuse. Il faut toutefois une observation adaptée : les probes seules n’ont pas suffi dans notre test. Les décisions de promotion et d’abandon sont restées manuelles ; nous n’avons pas mis en place de détection ni de rollback automatique.
 
+## J3 matin — Test de charge et décision automatique
 
+**15 octobre 2026**
 
+Hier, nous avions décidé nous-mêmes de promouvoir ou d’abandonner un Canary. Ce matin, nous avons ajouté un test k6 pour que la chaîne prenne cette décision à partir de seuils mesurés.
+
+Le lab suit la séquence `2.0.0 → 2.1.0 → abandon automatique → revert → 2.2.0`. Le [journal des déploiements](docs/journal-deploiements-j3-matin.md) contient la chronologie, et le [postmortem de 2.1.0](docs/postmortem-2.1.0.md) reprend l’enquête.
+
+### Préparer l’analyse et la référence
+
+Le cluster était inaccessible après son arrêt. Une fois l’environnement Docker remis en route, nous avons vérifié le nœud, les CRD Argo Rollouts et le service en `2.0.0`.
+
+Le dépôt contenait déjà un Rollout, sans Deployment. Sur `feat/analyse-auto`, nous avons donc remplacé `apps/taskflow/rollout.yaml` par l’exemple de robustesse et ajouté trois fichiers dans ce même dossier :
+
+| Fichier | Rôle |
+| --- | --- |
+| `analysis-template.yaml` | Définit le Job k6 déclenché par Argo Rollouts |
+| `configmap-k6.yaml` | Contient le scénario : cinq utilisateurs virtuels, 30 secondes et deux seuils |
+| `service-canary.yaml` | Donne accès uniquement aux pods de la nouvelle version |
+
+L’AnalysisTemplate a d’abord été copié dans `apps/`. Nous l’avons déplacé dans `apps/taskflow/` avant le commit, car c’est le dossier surveillé par Argo CD.
+
+La [PR #13](https://github.com/Darkbd11/taskflow-gitops/pull/13) a été approuvée par Daryl et fusionnée en conservant l’image `2.0.0`.
+
+![PR de configuration de l’analyse automatique](docs/j3-matin-04-pr-analyse-auto.png)
+
+Après synchronisation, les trois CRD, l’AnalysisTemplate `robustesse-k6`, la ConfigMap `k6-robustesse` et les services `taskflow` et `taskflow-canary` étaient présents.
+
+![Ressources installées dans le cluster](docs/j3-matin-05-ressources-analyse-auto.png)
+
+![Version 2.0.0 stable avant le test de l’incident](docs/j3-matin-05-rollout-argocd.png)
+
+Nous avons lancé la référence avec :
+
+```bash
+bash ./scripts/charge.sh http://taskflow
+```
+
+Le test a renvoyé 728 requêtes, aucune erreur et un p95 HTTP de 8,32 ms. Les seuils étaient respectés : moins de 2 % d’erreurs et un p95 inférieur à 250 ms.
+
+![Mesure k6 de référence en 2.0.0](docs/j3-matin-02-charge-2.0.0.png)
+
+### Laisser l’analyse arrêter 2.1.0
+
+La [PR #14](https://github.com/Darkbd11/taskflow-gitops/pull/14) a changé uniquement l’image en `2.1.0`. Nous avons suivi le Rollout et les AnalysisRun dans deux terminaux WSL :
+
+```bash
+kubectl argo rollouts get rollout taskflow -n taskflow --watch
+kubectl -n taskflow get analysisruns -w
+```
+
+Ces commandes étaient utilisées dans des terminaux séparés. Nous n’avons lancé ni promotion ni abandon manuel.
+
+Au premier palier, trois pods restaient en `2.0.0` et un pod en `2.1.0` était prêt. Après la pause de 20 secondes, l’AnalysisRun `taskflow-df976ccb5-6-2` a lancé le Job k6 sur `taskflow-canary`.
+
+![Le Canary et son analyse en cours](docs/j3-matin-07-analyse-2.1.0-en-cours.png)
+
+Le test a produit 299 requêtes, dont 90 en échec, et un p95 de 313,22 ms. Les deux seuils étaient dépassés. L’AnalysisRun est passé en `Failed` à 11:28:50, après 37 secondes.
+
+![Échec de l’analyse de 2.1.0](docs/j3-matin-07-analysisrun-2.1.0-echec.png)
+
+Le [message du Rollout](docs/j3-matin-08-rollout-2.1.0.txt) attribue l’abandon à cette analyse. Le Canary a été réduit à zéro et le groupe stable est repassé à quatre pods. L’observation a confirmé 100 réponses en `2.0.0`, HTTP 200.
+
+![Réponses après l’abandon automatique](docs/j3-matin-09-service-apres-abort.png)
+
+Nous avons conservé les quatre preuves de l’enquête : la révision du Rollout, le détail de l’AnalysisRun, les logs k6 et les événements Kubernetes. Elles sont reliées dans le postmortem.
+
+### Expliquer le défaut et remettre Git en cohérence
+
+Le code du cours permet d’expliquer le comportement : `2.1.0` est publiée avec 300 ms de latence ajoutée et une probabilité d’erreur de 30 %. Le middleware laisse `/health` en dehors de cette injection de pannes. Les probes peuvent donc réussir pendant que `/tasks`, appelé par k6, se dégrade.
+
+Le contrôle k6 a bien joué son rôle, mais Git demandait toujours `2.1.0`. Argo CD affichait `Synced / Degraded`. Nous avons annulé la PR #14 par la [PR #15](https://github.com/Darkbd11/taskflow-gitops/pull/15), approuvée par Daryl.
+
+![PR de revert de l’incident](docs/j3-matin-10-pr-revert-2.1.0.png)
+
+Après synchronisation, le Rollout et Argo CD étaient sains en `2.0.0`.
+
+![Vérification après le revert](docs/j3-matin-11-retour-stable-2.0.0.png)
+
+### Vérifier que 2.2.0 passe le même contrôle
+
+Nous avons ensuite proposé `2.2.0` avec la [PR #16](https://github.com/Darkbd11/taskflow-gitops/pull/16). L’AnalysisRun `taskflow-7ddd57d788-8-2` a réussi en 37 secondes : 725 requêtes, aucune erreur et un p95 HTTP de 13,85 ms.
+
+![Analyse de 2.2.0 terminée avec succès](docs/j3-matin-13-analysisrun-2.2.0-succes.png)
+
+La progression a continué sans commande de promotion jusqu’à 100 %. Le contrôle final montre quatre pods prêts en `2.2.0`, le Rollout `Healthy`, Argo CD `Synced / Healthy` et 100 réponses HTTP 200.
+
+![Fin du déploiement et contrôle des réponses en 2.2.0](docs/j3-matin-14-deploiement-2.2.0-final.png)
+
+| Version | Requêtes k6 | Échecs | p95 HTTP | Décision |
+| --- | ---: | ---: | ---: | --- |
+| 2.0.0, référence manuelle | 728 | 0 % | 8,32 ms | Seuils respectés |
+| 2.1.0, analyse automatique | 299 | 30,10 % | 313,22 ms | Abandon automatique |
+| 2.2.0, analyse automatique | 725 | 0 % | 13,85 ms | Progression autorisée |
+
+Le p95 utilisé est celui de `http_req_duration`. La durée d’une itération comprend aussi l’attente prévue dans le script ; ce n’est pas la mesure comparée au seuil de 250 ms.
+
+### Ce que je retiens du lab
+
+La chaîne a pris deux décisions cohérentes avec les mesures : arrêter `2.1.0` et laisser avancer `2.2.0`. Le service Canary a permis de tester la nouvelle version seule, et le revert a remis Git en accord avec la version que nous voulions conserver.
+
+Pour une version qui passe les tests unitaires mais devient lente sous charge, le mécanisme est le même : k6 dépasse le seuil de p95, le Job échoue, l’AnalysisRun échoue puis Argo Rollouts abandonne le déploiement. Nous corrigeons ensuite la référence dans Git par PR et vérifions le retour à un état sain.
+
+Les 37 secondes mesurées correspondent à chaque analyse. Nous n’avons pas mesuré précisément la durée totale d’exposition des utilisateurs. Les limites des mesures et les actions proposées figurent dans le postmortem.
+
+# Journal des déploiements — J3 matin
+
+**15 octobre 2026 · Boulaye DOUCOURE et Darry KANYEP**
+
+| Heure | Changement ou contrôle | Résultat | Preuve |
+| --- | --- | --- | --- |
+| 11:12:42 | [PR #13](https://github.com/Darkbd11/taskflow-gitops/pull/13), commit `8a67c35` : analyse automatique ajoutée | Image maintenue en `2.0.0` ; AnalysisTemplate, ConfigMap et service Canary déployés | [Ressources](j3-matin-05-ressources-analyse-auto.png) |
+| Avant la PR #14 | Test k6 de référence sur `2.0.0` | 728 requêtes, 0 % d’erreurs, p95 de 8,32 ms | [Logs](j3-matin-02-charge-2.0.0.txt) |
+| 11:26:31 | [PR #14](https://github.com/Darkbd11/taskflow-gitops/pull/14), commit `bfb6e1b` : image `2.1.0` | Révision 6, Canary limité au premier palier | [Analyse en cours](j3-matin-07-analyse-2.1.0-en-cours.png) |
+| 11:28:13 | Début de `taskflow-df976ccb5-6-2` | Job k6 sur `taskflow-canary` | [Export](j3-matin-15-analysisruns.yaml) |
+| 11:28:44 | k6 termine avec ses seuils dépassés | 30,10 % d’erreurs ; p95 de 313,22 ms | [Logs k6](j3-matin-08-logs-k6-2.1.0.txt) |
+| 11:28:50 | Analyse terminée en `Failed`, après 37 s | Échec du contrôle de déploiement | [AnalysisRun](j3-matin-08-analysisrun-2.1.0.txt) |
+| Après l’échec | Abandon automatique | Canary à zéro, groupe stable rétabli en `2.0.0` | [Rollout](j3-matin-08-rollout-2.1.0.txt), [événements](j3-matin-15-evenements-final.txt) |
+| Après stabilisation | Observation du service | 100 réponses en `2.0.0`, HTTP 200 ; Argo CD `Synced / Degraded` | [Capture](j3-matin-09-service-apres-abort.png) |
+| 11:41:43 | [PR #15](https://github.com/Darkbd11/taskflow-gitops/pull/15), commit `197b0f0` : revert vers `2.0.0` | État voulu corrigé dans Git | [PR fusionnée](j3-matin-10-pr-revert-2.1.0.png) |
+| À partir de 11:43:23 | Vérification après revert | Rollout `Healthy`, Argo CD `Synced / Healthy`, HTTP 200 | [Capture](j3-matin-11-retour-stable-2.0.0.png) |
+| 11:50:09 | [PR #16](https://github.com/Darkbd11/taskflow-gitops/pull/16), commit `d5fe1ec` : image `2.2.0` | Démarrage de la révision 8 | Historique GitHub |
+| 11:52:02 | Début de `taskflow-7ddd57d788-8-2` | Nouvelle analyse k6 | [Export](j3-matin-15-analysisruns.yaml) |
+| 11:52:39 | Analyse terminée en `Successful`, après 37 s | 725 requêtes, 0 % d’erreurs, p95 de 13,85 ms | [Résumé k6](j3-matin-15-k6-2.2.0-extrait.txt) |
+| Après le succès | Progression des paliers sans promotion manuelle | Réplicas de la nouvelle version augmentés | [Événements](j3-matin-15-evenements-final.txt) |
+| À partir de 11:55:00 | Contrôle final | `2.2.0` stable à 100 %, quatre pods prêts, Argo CD sain, 100 réponses HTTP 200 | [Capture finale](j3-matin-14-deploiement-2.2.0-final.png) |
+
+Les événements fournis ont des âges relatifs. Le début exact d’exposition au défaut et l’instant précis de la dernière réponse en `2.1.0` ne sont pas mesurés. La durée de 37 secondes correspond à chaque AnalysisRun.
+
+Le [postmortem](postmortem-2.1.0.md) détaille la cause, l’impact observé et les suites proposées.
