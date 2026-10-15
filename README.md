@@ -99,7 +99,7 @@ Voici le même changement dans GitHub :
 
 La PR **#1**, `Update repository URL in application.yaml`, a été approuvée par Daryl puis fusionnée dans `main`. Le commit de fusion visible est `93623dc`.
 
-![PR de configuration approuvée par Daryl et fusionnée](<docs/Image ChatGPT 14 oct. 2026, 11_54_54.png>)
+![PR de configuration approuvée par Daryl et fusionnée](docs/j2-matin-pr-configuration-argocd-fusionnee.png)
 
 Une fois le fichier à jour en local, la commande prévue pour déclarer l'application est :
 
@@ -119,7 +119,7 @@ kubectl get pods -n taskflow -w
 
 La capture montre quatre pods en `Running`, chacun avec `1/1` conteneur prêt et aucun redémarrage.
 
-![Les quatre pods TaskFlow sont prêts](<docs/Image ChatGPT 14 oct. 2026, 11_54_35.png>)
+![Les quatre pods TaskFlow sont prêts](docs/j2-matin-pods-1.0.0.png)
 
 Depuis la racine du dépôt, le script d'observation se lance avec :
 
@@ -129,7 +129,7 @@ Depuis la racine du dépôt, le script d'observation se lance avec :
 
 Dans la capture, je suis déjà dans `scripts`, donc j'utilise `./observe.sh`. Le résultat affiche `40 version=1.0.0 http=200` : les 40 réponses regroupées correspondent à la version `1.0.0`, avec un code HTTP 200.
 
-![Observation de TaskFlow en version 1.0.0](<docs/Image ChatGPT 14 oct. 2026, 11_54_41.png>)
+![Observation de TaskFlow en version 1.0.0](docs/j2-matin-observation-1.0.0.png)
 
 Le lab demande aussi de vérifier **Synced** et **Healthy** dans Argo CD. `Synced` indique que le cluster correspond à Git ; `Healthy` indique que les ressources de l'application sont dans un état sain. Ce sont deux contrôles différents. La capture de ces statuts reste à ajouter : les pods et les réponses HTTP ne remplacent pas cette preuve.
 
@@ -302,7 +302,7 @@ source:
 
 Daryl a approuvé la PR #1, puis nous l’avons fusionnée. Le commit de fusion visible sur la capture est `93623dc`.
 
-![PR #1 approuvée et fusionnée](<docs/Image ChatGPT 14 oct. 2026, 11_54_54.png>)
+![PR #1 approuvée et fusionnée](docs/j2-matin-pr-configuration-argocd-fusionnee.png)
 
 L’application Argo CD se déclare ensuite avec :
 
@@ -323,11 +323,11 @@ bash ./scripts/observe.sh taskflow 40
 
 Les quatre pods étaient `Running`, avec `1/1` conteneur prêt et aucun redémarrage.
 
-![Les quatre pods en 1.0.0](<docs/Image ChatGPT 14 oct. 2026, 11_54_35.png>)
+![Les quatre pods en 1.0.0](docs/j2-matin-pods-1.0.0.png)
 
 L’observation a donné `40 version=1.0.0 http=200`.
 
-![Les réponses du service en 1.0.0](<docs/Image ChatGPT 14 oct. 2026, 11_54_41.png>)
+![Les réponses du service en 1.0.0](docs/j2-matin-observation-1.0.0.png)
 
 Ces deux contrôles ne donnent pas exactement la même information : les pods montrent l’état des conteneurs, alors que le script vérifie ce que renvoie l’application. La capture des statuts Argo CD au premier déploiement du matin n’a pas été conservée.
 
